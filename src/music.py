@@ -80,7 +80,7 @@ class Music(commands.Cog):
             state.now_playing = None
             await interaction.response.send_message("Stopped music")
         else:
-            pass    # TODO: add error "not in voice channel"
+            await interaction.response.send_message("Must be in voice channel to play music")
 
     @app_commands.command()
     @commands.guild_only()
@@ -344,7 +344,7 @@ class Music(commands.Cog):
                     await interaction.response.send_message("", embed=pl.playlist[0].get_embed())
 
                 message = await interaction.original_response()
-                await self._add_reaction_controls(message)      # TODO: fix reaction adding
+                await self._add_reaction_controls(message)
                 logging.info(f"Now playing '{video.title}'")
 
             else:
