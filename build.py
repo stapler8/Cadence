@@ -11,7 +11,7 @@ load_dotenv()
 
 bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
 
-@bot.event  
+@bot.event
 async def on_ready():
 
     for extension in os.listdir("./src"):

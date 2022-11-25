@@ -291,7 +291,6 @@ class Music(commands.Cog):
         else:
             message = await interaction.response.send_message("Added to top of queue", embed=pl.playlist[0].get_embed())
 
-    # TODO: fix bug with play occasionally working but not responding wih a message
     @app_commands.command()
     async def play(self, interaction: discord.Interaction, *, url: str):
         ctx = await self.bot.get_context(interaction)
@@ -325,7 +324,8 @@ class Music(commands.Cog):
                 if len(pl.playlist) > 1:
                     message = await interaction.response.send_message("", embed=pl.get_embed())
                 else:
-                    message = await interaction.response.send_message("", embed=video.get_embed())
+                    # message = await interaction.response.send_message("", embed=video.get_embed())
+                    message = await interaction.response.send_message("", embed=pl.playlist[0].get_embed())
                 await self._add_reaction_controls(message)      # TODO: fix reaction adding
                 logging.info(f"Now playing '{video.title}'")
             else:
