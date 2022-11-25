@@ -1,7 +1,10 @@
 {
-    "musicVoteSkip": false,
-    "musicSkipRequiresAdmin": true,
-    "musicRequiresRole": false,
+    "adminRoleID" : 0,
     "botStatus": "Groovin'",
+    "musicVoteSkip": false,
+    "musicVoteSkipRatio": 0.5,
+    "musicSkipRequiresAdmin": false,
+    "musicRequiresRole": false,
+
     "servers": {}
 }

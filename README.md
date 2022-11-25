@@ -1,1 +1,4 @@
 # Cadence
+
+Cadence bot settings:
+

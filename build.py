@@ -11,14 +11,19 @@ load_dotenv()
 
 bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
 
-
-@bot.event
+@bot.event  
 async def on_ready():
-    print("Bot is ready!")
 
     for extension in os.listdir("./src"):
-        if extension.endswith('.py') and not extension.startswith("__init__") and not extension.startswith("settings"):
-            await bot.load_extension(f'src.{extension[:-3]}')
+        if extension.endswith('.py') and not extension.startswith("__init__") and not extension.startswith("video"):
+            print(f"Loading extension {extension}")
+
+            try:
+                await bot.load_extension(f'src.{extension[:-3]}')
+                print(f"Loaded {extension}")
+
+            except discord.ext.commands.errors.ExtensionAlreadyLoaded:
+                print(f"{extension} already loaded")
 
     try:
         synced = await bot.tree.sync()
@@ -26,6 +31,8 @@ async def on_ready():
 
     except Exception as ex:
         print(ex)
+
+    print("Bot is ready!")
 
 
 @bot.tree.command(name="hello")
@@ -43,4 +50,5 @@ async def say(interaction: discord.Interaction, thing_to_say: str):
 # async def rofl(interaction: discord.Interaction):
 #     await interaction.response.send_message('**ROFLCOPTER** https://c.tenor.com/hYZmNf2vDd0AAAAC/roflcopter.gif')
 
+print("Loading bot")
 bot.run(os.getenv("TOKEN"))
