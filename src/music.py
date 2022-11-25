@@ -34,7 +34,7 @@ async def audio_playing(interaction):
 
 
 async def in_voice_channel(interaction):
-    voice = interaction.author.voice
+    voice = interaction.user.voice
     bot_voice = interaction.guild.voice_client
     if voice and bot_voice and voice.channel and bot_voice.channel and voice.channel == bot_voice.channel:
         return True
@@ -127,26 +127,30 @@ class Music(commands.Cog):
     async def skip(self, interaction: discord.Interaction):
         state = self.get_state(interaction.guild)
         client = interaction.guild.voice_client
-        ctx = self.bot.get_context(interaction)
 
         if not settings["musicVoteSkip"] and not settings["musicSkipRequiresAdmin"]:
             client.stop()
+            await interaction.response.send_message("Skipping song")
 
-        elif ctx.channel.permissions_for(ctx.author).administrator:
+        elif interaction.channel.permissions_for(interaction.user).administrator:
             client.stop()
+            await interaction.response.send_message("Skipping song")
 
         else:
-            if ctx.channel.permissions_for(ctx.author).administrator or state.is_requester(ctx.author):
+            if interaction.channel.permissions_for(interaction.user).administrator\
+                    or state.is_requester(interaction.user):
                 client.stop()
+                await interaction.response.send_message("Skipping song")
 
             else:
                 channel = client.channel
-                self._vote_skip(channel, ctx.author)
+                self._vote_skip(channel, interaction.user)
 
                 # announce vote
                 users_in_channel = len([member for member in channel.members if not member.bot])    # no robots allowed
                 required_votes = math.ceil(settings["voteSkipRatio"] * users_in_channel)
-                await ctx.send(f"{ctx.author.mention} voted to skip ({len(state.skip_votes)}/{required_votes} votes")
+                await interaction.response.send_message(
+                    f"{interaction.user.mention} voted to skip ({len(state.skip_votes)}/{required_votes} votes")
 
     def _vote_skip(self, channel, member):
         logging.info(f"{member.name} votes to skip")
@@ -179,12 +183,13 @@ class Music(commands.Cog):
         # ctx = await self.bot.get_context(interaction)
         state = self.get_state(interaction.guild)
 
-        if audio_playing(interaction) and in_voice_channel(interaction):
-            message = await interaction.response.send_message("", embed=state.now_playing.get_embed())
+        if await audio_playing(interaction) and await in_voice_channel(interaction):
+            await interaction.response.send_message("", embed=state.now_playing.get_embed())
+            message = await interaction.original_response()
+            await self._add_reaction_controls(message)
 
         else:
-            message = "Bot is not playing"
-        await self._add_reaction_controls(message)
+            await interaction.response.send_message("Bot is not playing")
 
     @app_commands.command()
     @commands.guild_only()
@@ -265,69 +270,83 @@ class Music(commands.Cog):
     @commands.guild_only()
     @commands.check(audio_playing)
     async def playskip(self, interaction: discord.Interaction, *, url: str):
-        ctx = await self.bot.get_context(interaction)
+        # ctx = await self.bot.get_context(interaction)
         client = interaction.guild.voice_client
         state = self.get_state(interaction.guild)
-        state.playlist[:0] = Playlist(url, ctx.author).playlist
+
+        state.playlist[:0] = Playlist(url, interaction.user).playlist
         client.stop()
-        pl = Playlist(url, ctx.author)
+        pl = Playlist(url, interaction.user)
+
         if len(pl.playlist) > 1:
-            message = await interaction.response.send_message("Playskipping", embed=pl.get_embed())
+            await interaction.response.send_message("Playskipping", embed=pl.get_embed())
         else:
-            message = await interaction.response.send_message("Playskipping", embed=pl.playlist[0].get_embed())
+            await interaction.response.send_message("Playskipping", embed=pl.playlist[0].get_embed())
+
+        message = await interaction.original_response()
+        await self._add_reaction_controls(message)
 
     @app_commands.command()
     @commands.guild_only()
     @commands.check(audio_playing)
     async def playtop(self, interaction: discord.Interaction, *, url: str):
-        client = interaction.guild.voice_client
         state = self.get_state(interaction.guild)
-        ctx = await self.bot.get_context(interaction)
+        state.playlist[:0] = Playlist(url, interaction.user).playlist
+        pl = Playlist(url, interaction.user)
 
-        state.playlist[:0] = Playlist(url, ctx.author).playlist
-        pl = Playlist(url, ctx.author)
         if len(pl.playlist) > 1:
-            message = await interaction.response.send_message("Added to top of queue", embed=pl.get_embed())
+            await interaction.response.send_message("Added to top of queue", embed=pl.get_embed())
         else:
-            message = await interaction.response.send_message("Added to top of queue", embed=pl.playlist[0].get_embed())
+            await interaction.response.send_message("Added to top of queue", embed=pl.playlist[0].get_embed())
+
+        message = await interaction.original_response()
+        await self._add_reaction_controls(message)
 
     @app_commands.command()
     async def play(self, interaction: discord.Interaction, *, url: str):
-        ctx = await self.bot.get_context(interaction)
-        client = ctx.guild.voice_client
-        state = self.get_state(ctx.guild)
+        client = interaction.guild.voice_client
+        state = self.get_state(interaction.guild)
         if client and client.channel:
             try:
-                pl = Playlist(url, ctx.author)
+                pl = Playlist(url, interaction.user)
             except youtube_dl.DownloadError as e:
                 logging.warning(f"Error downloading video: {e}")
                 await interaction.response.send_message("An error occurred when downloading the video")
                 return
+
             state.playlist.extend(pl.playlist)
             if len(pl.playlist) > 1:
-                message = await interaction.response.send_message("Added to queue", embed=pl.get_embed())
+                await interaction.response.send_message("Added to queue", embed=pl.get_embed())
             else:
-                message = await interaction.response.send_message("Added to queue", embed=pl.playlist[0].get_embed())
+                await interaction.response.send_message("Added to queue", embed=pl.playlist[0].get_embed())
+
+            message = await interaction.original_response()
             await self._add_reaction_controls(message)
+
         else:
-            if ctx.author.voice is not None and ctx.author.voice.channel is not None:
-                channel = ctx.author.voice.channel
+            if interaction.user.voice is not None and interaction.user.voice.channel is not None:
+                channel = interaction.user.voice.channel
                 try:
-                    pl = Playlist(url, ctx.author)
+                    pl = Playlist(url, interaction.user)
                 except youtube_dl.DownloadError as e:
                     await interaction.response.send_message("An error occurred when downloading the video")
                     return
+
                 client = await channel.connect()
-                video = Video_Full(pl.playlist[0].video_url, ctx.author)
+                video = Video_Full(pl.playlist[0].video_url, interaction.user)
                 state.playlist.extend(pl.playlist[1:])
                 self._play_song(client, state, video)
+
                 if len(pl.playlist) > 1:
-                    message = await interaction.response.send_message("", embed=pl.get_embed())
+                    await interaction.response.send_message("", embed=pl.get_embed())
                 else:
                     # message = await interaction.response.send_message("", embed=video.get_embed())
-                    message = await interaction.response.send_message("", embed=pl.playlist[0].get_embed())
+                    await interaction.response.send_message("", embed=pl.playlist[0].get_embed())
+
+                message = await interaction.original_response()
                 await self._add_reaction_controls(message)      # TODO: fix reaction adding
                 logging.info(f"Now playing '{video.title}'")
+
             else:
                 interaction.response.send_message("User must be in voice channel to play music", ephemeral=True)
 
