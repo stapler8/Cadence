@@ -1,11 +1,16 @@
 import json
 
-# load our default settings and server values
-with open("cfg/default_cfg.json") as f:
-    DEFAULT_SETTINGS = json.load(f)
+DEFAULT_SETTINGS = {}
+server = {}
 
-with open("cfg/server.json") as f:
-    server = json.load(f)
+# load our default settings and server values
+if not DEFAULT_SETTINGS:
+    with open("cfg/default_cfg.json") as f:
+        DEFAULT_SETTINGS = json.load(f)
+
+if not server:
+    with open("cfg/server.json") as f:
+        server = json.load(f)
 
 
 # check if we have a settings file, and create one if needed
