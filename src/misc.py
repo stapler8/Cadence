@@ -37,6 +37,31 @@ class Misc(commands.Cog):
                 picture = discord.File(f)
                 await interaction.response.send_message(file=picture)
 
+    @app_commands.command(name="roll")
+    async def roll(self, interaction: discord.Interaction, amount: int, sides: int):
+        """Roll some dice!"""
+
+        if sides < 1 or sides >= 1000:
+            await interaction.response.send_message("Sides must be > 0 and < 1000", ephemeral=True)
+            return
+
+        if amount < 1 or amount > 30:
+            await interaction.response.send_message("Amount of dice must be >0 and <31")
+            return
+
+
+
+        message = ""
+        if amount > 5:
+            message += "Your rolls:"
+
+        for die in range(amount):
+            result = random.randint(1, sides)
+            if die % 5 == 0:
+                message += '\n'
+            message += f"{result}\t"
+
+        await interaction.response.send_message(message)
 
     @app_commands.command(name="rofl")
     async def rofl(self, interaction: discord.Interaction):
@@ -93,7 +118,7 @@ class Misc(commands.Cog):
             await interaction.response.send_message(f"Invalid setting {setting}, see README.md")
 
     @setting.error
-    async def setting_hander(self, interaction: discord.Interaction, error):
+    async def setting_handler(self, interaction: discord.Interaction, error):
         if isinstance(error, app_commands.MissingRole):
             await interaction.response.send_message("Command /setting requires Administrator role", ephemeral=True)
 
