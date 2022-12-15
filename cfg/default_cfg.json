@@ -6,6 +6,5 @@
     "musicSkipRequiresAdmin": false,
     "musicRequiresRole": false,
     "musicRole": 0,
-    "colourPrefix": "[clr]",
     "servers": {}
 }
