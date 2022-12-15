@@ -1,6 +1,7 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
+import random
 
 import json
 
@@ -22,6 +23,20 @@ class Misc(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+
+    @app_commands.command(name="flip")
+    async def flip(self, interaction: discord.Interaction):
+        """Flip a coin!"""
+        if random.choice(["Heads", "Tails"]) == "Heads":
+            with open('./img/coin-heads.png', 'rb') as f:
+                picture = discord.File(f)
+                await interaction.response.send_message(file=picture)
+
+        else:
+            with open('./img/coin-tails.png', 'rb') as f:
+                picture = discord.File(f)
+                await interaction.response.send_message(file=picture)
+
 
     @app_commands.command(name="rofl")
     async def rofl(self, interaction: discord.Interaction):
