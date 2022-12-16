@@ -27,6 +27,7 @@ class Misc(commands.Cog):
     @app_commands.command(name="flip")
     async def flip(self, interaction: discord.Interaction):
         """Flip a coin!"""
+
         if random.choice(["Heads", "Tails"]) == "Heads":
             with open('./img/coin-heads.png', 'rb') as f:
                 picture = discord.File(f)
@@ -38,7 +39,7 @@ class Misc(commands.Cog):
                 await interaction.response.send_message(file=picture)
 
     @app_commands.command(name="roll")
-    async def roll(self, interaction: discord.Interaction, amount: int, sides: int):
+    async def roll(self, interaction: discord.Interaction, amount: int = 3, sides: int = 6):
         """Roll some dice!"""
 
         if sides < 1 or sides >= 1000:

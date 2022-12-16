@@ -13,8 +13,7 @@ bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
 async def on_ready():
 
     for extension in os.listdir("./src"):
-        if extension.endswith('.py') and not extension.startswith("__init__") and not extension.startswith("video")\
-                and not extension.startswith("roles"):
+        if extension.endswith('.py') and not extension.startswith("__init__") and not extension.startswith("video"):
             print(f"Loading extension {extension}")
 
             try:
