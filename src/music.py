@@ -72,6 +72,8 @@ class Music(commands.Cog):
     @commands.guild_only()
     # @commands.has_permissions(administrator=True)
     async def stop(self, interaction: discord.Interaction):
+        """Disconnect the music player"""
+
         client = interaction.guild.voice_client
         state = self.get_state(interaction.guild)
         if client and client.channel:
@@ -88,6 +90,8 @@ class Music(commands.Cog):
     @commands.check(in_voice_channel)
     @commands.check(is_audio_requester)
     async def pause(self, interaction: discord.Interaction):
+        """Pause the music player"""
+
         client = interaction.guild.voice_client
         self._pause_audio(client)
 
@@ -97,34 +101,13 @@ class Music(commands.Cog):
         else:
             client.pause()
 
-    '''
-    DEPRECATED COMMAND:
-    
-    Not particularly useful, slated for removal
-    '''
-    # @app_commands.command()
-    # @commands.guild_only()
-    # @commands.check(audio_playing)
-    # @commands.check(in_voice_channel)
-    # @commands.check(is_audio_requester)
-    # @commands.has_permissions(administrator=True)
-    # async def volume(self, interaction: discord.Interaction, volume: int):
-    #     state = self.get_state(interaction.guild)
-    #     if volume < 0:new_index:
-    #         volume = 0
-    #     max_vol = settings["musicMaxVolume"]
-    #     if max_vol > -1:
-    #         if volume > max_vol:
-    #             volume = max_vol
-    #     client = interaction.guild.voice_client
-    #     state.volume = float(volume) / 100
-    #     client.source.volume = state.volume     # update the audio volume
-
     @app_commands.command()
     @commands.guild_only()
     @commands.check(audio_playing)
     @commands.check(in_voice_channel)
     async def skip(self, interaction: discord.Interaction):
+        """Skip the currently playing song"""
+
         state = self.get_state(interaction.guild)
         client = interaction.guild.voice_client
 
@@ -180,6 +163,8 @@ class Music(commands.Cog):
     @commands.guild_only()
     @commands.check(audio_playing)
     async def nowplaying(self, interaction: discord.Interaction):
+        """Check the currently playing song"""
+
         # ctx = await self.bot.get_context(interaction)
         state = self.get_state(interaction.guild)
 
@@ -195,6 +180,8 @@ class Music(commands.Cog):
     @commands.guild_only()
     @commands.check(audio_playing)
     async def queue(self, interaction: discord.Interaction):
+        """View queue"""
+
         state = self.get_state(interaction.guild)
         numbers_per_msg = 15
         for i in range(0, len(state.playlist), numbers_per_msg):
@@ -222,6 +209,8 @@ class Music(commands.Cog):
     @commands.check(audio_playing)
     # @commands.has_permissions(administrator=True)
     async def clear(self, interaction: discord.Interaction):
+        """Clear queue"""
+
         state = self.get_state(interaction.guild)
         state.playlist = []
         await interaction.response.send_message("Queue Cleared")
@@ -231,6 +220,8 @@ class Music(commands.Cog):
     @commands.check(audio_playing)
     # @commands.has_permissions(administrator=True)
     async def move(self, interaction: discord.Interaction, song_index: int, new_index: int):
+        """Move a song within the queue"""
+
         # move song to new location in queue
         state = self.get_state(interaction.guild)
         if 1 <= song_index <= len(state.playlist) and 1 <= new_index:
@@ -248,6 +239,8 @@ class Music(commands.Cog):
     @commands.guild_only()
     @commands.check(audio_playing)
     async def remove(self, interaction: discord.Interaction, song_index: int):
+        """Remove a song by index"""
+
         state = self.get_state(interaction.guild)
         if 1 <= song_index <= len(state.playlist):
             state.playlist.pop(song_index - 1)
@@ -262,6 +255,8 @@ class Music(commands.Cog):
     @commands.guild_only()
     @commands.check(audio_playing)
     async def shuffle(self, interaction: discord.Interaction):
+        """Shuffle playlist"""
+
         state = self.get_state(interaction.guild)
         random.shuffle(state.playlist)
         await interaction.response.send_message("Playlist shuffled")
@@ -270,6 +265,8 @@ class Music(commands.Cog):
     @commands.guild_only()
     @commands.check(audio_playing)
     async def playskip(self, interaction: discord.Interaction, *, url: str):
+        """Skip current song and play requested one"""
+
         # ctx = await self.bot.get_context(interaction)
         client = interaction.guild.voice_client
         state = self.get_state(interaction.guild)
@@ -290,6 +287,8 @@ class Music(commands.Cog):
     @commands.guild_only()
     @commands.check(audio_playing)
     async def playtop(self, interaction: discord.Interaction, *, url: str):
+        """Add a song to the top of the queue"""
+
         state = self.get_state(interaction.guild)
         state.playlist[:0] = Playlist(url, interaction.user).playlist
         pl = Playlist(url, interaction.user)
@@ -304,6 +303,8 @@ class Music(commands.Cog):
 
     @app_commands.command()
     async def play(self, interaction: discord.Interaction, *, url: str):
+        """Play a song"""
+
         client = interaction.guild.voice_client
         state = self.get_state(interaction.guild)
         if client and client.channel:
@@ -348,7 +349,7 @@ class Music(commands.Cog):
                 logging.info(f"Now playing '{video.title}'")
 
             else:
-                interaction.response.send_message("User must be in voice channel to play music", ephemeral=True)
+                await interaction.response.send_message("User must be in voice channel to play music", ephemeral=True)
 
     async def on_reaction_add(self, reaction, user):
         message = reaction.message
