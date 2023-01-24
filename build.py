@@ -1,19 +1,23 @@
 import os
+import sqlite3
 
 import discord
 from discord.ext import commands
 
+from settings import settings
+
 from dotenv import load_dotenv
 load_dotenv()
 
-bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
+bot = commands.Bot(command_prefix="", intents=discord.Intents.all())
 
 
 @bot.event
 async def on_ready():
 
     for extension in os.listdir("./src"):
-        if extension.endswith('.py') and not extension.startswith("__init__") and not extension.startswith("video"):
+        if extension.endswith('.py') and not extension.startswith("__init__") and not extension.startswith("video")\
+                and not extension.startswith("(dev)"):
             print(f"Loading extension {extension}")
 
             try:
@@ -30,6 +34,30 @@ async def on_ready():
 
     except Exception as ex:
         print(ex)
+
+    """Upcoming functionality"""
+    # if settings["quotesEnabled"]:
+    #
+    #     print("Loading quote database")
+    #
+    #     try:
+    #         c = sqlite3.connect('./quotes.db')
+    #         cursor = c.cursor()
+    #     except sqlite3.Error as error:
+    #         print('SQL Error - ', error)
+    #         exit(1)
+    #
+    #     table = """
+    #                     CREATE TABLE IF NOT EXISTS QUOTES (
+    #                     QUOTE TEXT,
+    #                     USERNAME VARCHAR(255),
+    #                     DATE TEXT
+    #                     );
+    #                     """
+    #     cursor.execute(table)
+    #     c.commit()
+    #     c.close()
+
 
     print("Bot is ready!")
 

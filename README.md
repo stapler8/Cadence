@@ -2,18 +2,33 @@
 
 Setup guide:
     Download Cadence to your working directory
-    Run `touch .env`
-    Run `echo "TOKEN=<your bot token>" > .env`
-    Run the bot inside your venv
+    Run the following: 
+
+        python3 -m venv venv
+        source venv/bin/activate
+        pip3 install -r requirements.txt
+        echo "TOKEN=<your bot token>" > .env
+
+Run the bot inside your venv:
+    
+    source venv/bin/activate
+    python3 build.py
 
 Once in discord:    
     /setadminrole <id>, if you set the ID incorrectly you must edit cfg/cfg.json manually.
+    After setting this, the bot must be restarted.
 
 Cadence bot settings:
 
     adminRoleID: Set the role ID for your admin role. (Must be changed with /setadminrole command)
 
     botStatus: Set the bot's status message
+
+    clubhouseRoleID: If set, restricts access to certain commands.
+
+    colourPrefix: The prefix used for colour roles to be detected by the bot.
+
+    colourRolesEnabled: Determines if colour roles will be used by the server
 
     musicVoteSkip: Set if you want users to vote on skipping songs (Default: false)
 
