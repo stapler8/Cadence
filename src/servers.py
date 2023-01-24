@@ -12,18 +12,18 @@ servers = {}
 
 # get server data from file
 try:
-    with open("data/servers.json", "x") as f:
+    with open("./data/servers.json", "x") as f:
         json.dump({}, f)
         print("No server file found, creating one")
 
 except FileExistsError:
-    with open("data/servers.json") as f:
+    with open("./data/servers.json") as f:
         servers = json.load(f)
     print("Loaded server data")
 
 async def writeServers():
     try:
-        with open("data/servers.json", "w") as f:
+        with open("./data/servers.json", "w") as f:
             json.dump(servers, f)
 
     except Exception as ex:
@@ -47,10 +47,10 @@ class Servers(commands.Cog):
         """Add a server to the list"""
 
         if not name or not address:
-            interaction.response.send_message(f"Error: Servers require a name and address", ephemeral=True)
+            await interaction.response.send_message(f"Error: Servers require a name and address", ephemeral=True)
 
         if name.lower() in servers.keys():
-            interaction.response.send_message(f"Error: {name} already in server list", ephemeral=True)
+            await interaction.response.send_message(f"Error: {name} already in server list", ephemeral=True)
             return
 
         newserver = {

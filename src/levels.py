@@ -17,24 +17,24 @@ levels = []
 
 # get experience and level values
 try:
-    with open("data/experience.json", "x") as f:
+    with open("./data/experience.json", "x") as f:
         json.dump({}, f)
         print("No levels file found, creating one")
 
 except FileExistsError:
-    with open("data/experience.json") as f:
+    with open("./data/experience.json") as f:
         experience = json.load(f)
     print("Loaded levels data")
 
 try:
-    with open("cfg/levels.json", "x") as f:
+    with open("./cfg/levels.json", "x") as f:
         lvl = [100]
         for i in range(100):
             lvl.append(int(lvl[len(lvl) - 1] * 1.2 + 50))
         json.dump(lvl, f)
 
 except FileExistsError:
-    with open ("cfg/levels.json") as f:
+    with open ("./cfg/levels.json") as f:
         levels = json.load(f)
 
 
