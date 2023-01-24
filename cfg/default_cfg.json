@@ -1,11 +1,13 @@
 {
     "adminRoleID" : 0,
     "botStatus": "Groovin'",
+    "clubhouseRoleID": 0,
+    "colourPrefix": "[clr]",
+    "colourRolesEnabled": false,
     "musicVoteSkip": false,
     "musicVoteSkipRatio": 0.5,
     "musicSkipRequiresAdmin": false,
     "musicRequiresRole": false,
     "musicRole": 0,
-    "colourPrefix": "[clr]",
-    "servers": {}
+    "quotesAddQuoteRequiresAdmin": false,
 }

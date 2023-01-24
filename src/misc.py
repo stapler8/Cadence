@@ -80,7 +80,7 @@ class Misc(commands.Cog):
             try:
                 settings["adminRoleID"] = int(role_id)
                 await writecfg()
-                await interaction.response.send_message("Admin Role ID set!", ephemeral=True)
+                await interaction.response.send_message("Admin Role ID set!\nNote: Bot must restart for this setting to be applied", ephemeral=True)
             except Exception as ex:
                 await interaction.response.send_message(f"Exception: {ex}", ephemeral=True)
 
@@ -139,7 +139,7 @@ class Misc(commands.Cog):
     @getsetting.error
     async def getsetting_handler(self, interaction: discord.Interaction, error):
         if isinstance(error, app_commands.MissingRole):
-            await interaction.response.send_message("Command getsetting requires Administrator role", ephemeral=True)
+            await interaction.response.send_message("Command /getsetting requires Administrator role", ephemeral=True)
 
 
 async def setup(bot):
