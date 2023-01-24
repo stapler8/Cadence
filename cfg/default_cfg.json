@@ -9,5 +9,5 @@
     "musicSkipRequiresAdmin": false,
     "musicRequiresRole": false,
     "musicRole": 0,
-    "quotesAddQuoteRequiresAdmin": false,
+    "quotesAddQuoteRequiresAdmin": false
 }
