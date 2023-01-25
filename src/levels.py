@@ -88,12 +88,15 @@ class Levels(commands.Cog):
 
                     # check if user's level has gone up
                     if await getLevel(experience[userid]['experience']) > experience[userid]["level"]:
-                        experience[userid]["level"] = await getLevel(experience[userid]["experience"])
 
-                        if settings["levelsPingOnLevelUp"]:
-                            await message.channel.send(f"{message.author.mention} is now level {experience[userid]['level']}!")
-                        else:
-                            await message.channel.send(f"{message.author.user} is now level {experience[userid]['level']}")
+                        newlevel = await getLevel(experience[userid]["experience"])
+                        experience[userid]["level"] = newlevel
+
+                        if settings["levelsMinLevelToMention"] <= newlevel:
+                            if settings["levelsPingOnLevelUp"]:
+                                await message.channel.send(f"{message.author.mention} is now level {experience[userid]['level']}!")
+                            else:
+                                await message.channel.send(f"{message.author.user} is now level {experience[userid]['level']}")
 
                     await writeExperience()
                     print(f"Added xp to {message.author.name}")
