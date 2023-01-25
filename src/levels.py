@@ -111,17 +111,21 @@ class Levels(commands.Cog):
     async def level(self, interaction: discord.Interaction, user: str = ""):
         """Get your current level"""
 
+        username = ""
         level = 0
         exp = 0
         msgCount = 0
 
         if not user:
+
+            username = interaction.user.name
+
             if str(interaction.user.id) in experience.keys():
                 userid = str(interaction.user.id)
                 level = experience[userid]['level']
                 exp = experience[userid]['experience']
                 msgCount = experience[userid]['messageCount']
-                user = interaction.user.name
+                username = interaction.user.name
 
         else:
             for usr in experience.values():
@@ -130,10 +134,11 @@ class Levels(commands.Cog):
                     level = usr['level']
                     exp = usr['experience']
                     msgCount = usr['messageCount']
+                    username = usr['name']
 
                     break
 
-        embed = discord.Embed(title=f"{user}:", description=f"Level: {level}\nExperience: {exp}\nMessages: {msgCount}")
+        embed = discord.Embed(title=f"{username}:", description=f"Level: {level}\nExperience: {exp}\nMessages: {msgCount}")
         await interaction.response.send_message(embed=embed)
 
 
