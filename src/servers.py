@@ -95,10 +95,13 @@ class Servers(commands.Cog):
 
             if not selection['description']:
                 selection['description'] = "None"
-            await interaction.response.send_message(f"""Server Info:
+
+            embed = discord.Embed(title="Server Info",
+                                  description=f"""
             Name: {selection['name']}
             Address: {selection['address']}
-            \nDescription: {selection['description']}""", ephemeral=True)
+            \nDescription: {selection['description']}""")
+            await interaction.response.send_message(embed=embed, ephemeral=True)
 
         select.callback = servers_callback
 
@@ -109,20 +112,83 @@ class Servers(commands.Cog):
 
     @app_commands.command(name="removeserver")
     @app_commands.checks.has_role(settings["adminRoleID"])
-    async def removeserver(self, interaction: discord.Interaction, name: str):
+    async def removeserver(self, interaction: discord.Interaction):
         """Remove a server from the list"""
 
-        if not name:
-            await interaction.response.send_message(f"Error: Must provide a name", ephemeral=True)
-            return
+        if not servers:
+            embed = discord.Embed(title="Error", description="No servers found")
+            await interaction.response.send_message(embed=embed, ephemeral=True)
 
-        if not name.lower() in servers.keys():
-            await interaction.response.send_message(f"Error: Server name not found", ephemeral=True)
-            return
+        select = await self.getserverselect()
 
-        servers.pop(name.lower())
-        await writeServers()
-        await interaction.response.send_message(f"Server {name} successfully removed", ephemeral=True)
+        async def removeserver_callback(interaction: discord.Interaction):
+
+            selection = {}
+            for server in servers:
+                if select.values[0].lower() == server:
+                    selection = server
+                    break
+
+            servers.pop(selection)
+            await writeServers()
+
+            embed = discord.Embed(title="Success", description=f"Server {selection} successfully removed")
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+
+        select.callback = removeserver_callback
+
+        view = View()
+        view.add_item(select)
+
+        await interaction.response.send_message("Select a server to remove: ", view=view, ephemeral=True)
+
+    @app_commands.command(name="modifyserver")
+    @app_commands.checks.has_role(settings["adminRoleID"])
+    async def modifyserver(self, interaction: discord.Interaction, newname: str = "", newaddress: str = "", newdescription: str = ""):
+        """Modify a server in the list"""
+
+        if not servers:
+            embed = discord.Embed(title="Error", description="No servers found")
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+
+        select = await self.getserverselect()
+
+        async def modifyserver_callback(interaction: discord.Interaction):
+
+            selection = {}
+            for server in servers:
+                if select.values[0].lower() == server:
+                    selection = servers[server]
+                    servers.pop(server)
+                    break
+
+            if newname:
+                selection['name'] = newname.lower()
+            if newaddress:
+                selection['address'] = newaddress
+            if newdescription:
+                selection['description'] = newdescription
+
+            servers[selection['name']] = selection
+            await writeServers()
+
+            embed = discord.Embed(title="Success", description=f"Server {selection['name']} successfully modified")
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+
+        select.callback = modifyserver_callback
+
+        view = View()
+        view.add_item(select)
+
+        await interaction.response.send_message("Select a server to modify", view=view, ephemeral=True)
+
+    async def getserverselect(self):
+        serverlist = []
+
+        for server in servers.keys():
+            serverlist.append(discord.SelectOption(label=server))
+        select = discord.ui.Select(placeholder="Select a server", options=serverlist)
+        return select
 
 # add our cog to the bot, so it's all run on startup.
 async def setup(bot):
