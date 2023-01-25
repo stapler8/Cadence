@@ -36,6 +36,8 @@ Cadence bot settings:
 
     levelsPingOnLevelUp: Whether or not users should be @ mentioned on leveling up.
 
+    levelsMinLevelToMention: The minimum level a user must have before the bot sends a levelup message.
+
     musicVoteSkip: Set if you want users to vote on skipping songs (Default: false)
 
     musicVoteSkipRatio: Set the ratio required to voteskip, 0-1. (Default: 0.5)

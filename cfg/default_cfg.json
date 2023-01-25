@@ -7,6 +7,7 @@
     "levelsMaxLevel": 100,
     "levelsExpCooldown": 60,
     "levelsPingOnLevelUp": true,
+    "levelsMinLevelToMention": 5,
     "musicVoteSkip": false,
     "musicVoteSkipRatio": 0.5,
     "musicSkipRequiresAdmin": false,
