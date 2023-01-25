@@ -74,7 +74,7 @@ class Levels(commands.Cog):
             userid = str(message.author.id)
             if userid not in experience.keys():
 
-                experience[userid] = {"experience": 10, "timestamp": time.time(), "level": 0}
+                experience[userid] = {"experience": 10, "timestamp": time.time(), "level": 0, "name": message.author.name, "messageCount": 1}
                 print(f"Added {message.author.name} to experience")
 
                 await writeExperience()
@@ -85,6 +85,8 @@ class Levels(commands.Cog):
                 if time.time() - experience[userid]["timestamp"] >= int(settings["levelsExpCooldown"]):
                     experience[userid]["experience"] += random.randrange(10, 20)
                     experience[userid]["timestamp"] = time.time()
+                    experience[userid]['name'] = message.author.name
+                    experience[userid]['messageCount'] += 1
 
                     # check if user's level has gone up
                     if await getLevel(experience[userid]['experience']) > experience[userid]["level"]:
@@ -92,6 +94,7 @@ class Levels(commands.Cog):
                         newlevel = await getLevel(experience[userid]["experience"])
                         experience[userid]["level"] = newlevel
 
+                        # message user on level up
                         if settings["levelsMinLevelToMention"] <= newlevel:
                             if settings["levelsPingOnLevelUp"]:
                                 await message.channel.send(f"{message.author.mention} is now level {experience[userid]['level']}!")
@@ -101,26 +104,60 @@ class Levels(commands.Cog):
                     await writeExperience()
                     print(f"Added xp to {message.author.name}")
 
+                else:
+                    experience[userid]['messageCount'] += 1
+
     @app_commands.command(name="level")
-    async def level(self, interaction: discord.Interaction):
+    async def level(self, interaction: discord.Interaction, user: str = ""):
         """Get your current level"""
-        if str(interaction.user.id) not in experience.keys():
-            await interaction.response.send_message("Your level is 0")
+
+        level = 0
+        exp = 0
+        msgCount = 0
+
+        if not user:
+            if str(interaction.user.id) in experience.keys():
+                userid = str(interaction.user.id)
+                level = experience[userid]['level']
+                exp = experience[userid]['experience']
+                msgCount = experience[userid]['messageCount']
+                user = interaction.user.name
 
         else:
-            userid = str(interaction.user.id)
-            userlevel = await getLevel(experience[userid]["experience"])
-            await interaction.response.send_message(f"Your level is {userlevel}")
+            for usr in experience.values():
+
+                if usr['name'].lower() == user.lower():
+                    level = usr['level']
+                    exp = usr['experience']
+                    msgCount = usr['messageCount']
+
+                    break
+
+        embed = discord.Embed(title=f"{user}:", description=f"Level: {level}\nExperience: {exp}\nMessages: {msgCount}")
+        await interaction.response.send_message(embed=embed)
 
 
-    # Create our test command with an optional message argument
-    # @app_commands.command(name="level")
-    # async def test(self, interaction: discord.Interaction, message: str = settings["testMessage"]):
-    #
-    #     # send our response to the user. if the message should be viewable by all, exclude the ephemeral argument.
-    #     await interaction.response.send_message(message, ephemeral=True)
+    @app_commands.command(name="leaderboard")
+    async def leaderboard(self, interaction: discord.Interaction):
+        """Get the server's exp leaderboard"""
+        sortedLevels = sorted(experience.items(), key=lambda x: x[1]['experience'], reverse=True)
+        leaderboard = await self.getLeaderboard(sortedLevels)
 
+        embed = discord.Embed(title="Leaderboard", description=leaderboard)
+        await interaction.response.send_message(embed=embed)
 
-# add our cog to the bot, so it's all run on startup.
+    async def getLeaderboard(self, leaderboard):
+        # get a sorted leaderboard from a sorted dict of dicts
+        output = ""
+
+        # if less than 5 users in dict, display all users
+        size = 5 if len(leaderboard) >= 5 else len(leaderboard)
+
+        for i in range(size):
+            user = leaderboard[i][1]
+            output += f"{i + 1}: {user['name']}: Level {user['level']}, {user['experience']} Exp, {user['messageCount']} messages.\n"
+
+        return output
+
 async def setup(bot):
     await bot.add_cog(Levels(bot))
