@@ -30,6 +30,12 @@ Cadence bot settings:
 
     colourRolesEnabled: Determines if colour roles will be used by the server
 
+    levelsMaxLevel: The maximum level that can be attained by a user
+
+    levelsExpCooldown: The cooldown before a user can be granted more Exp for sending messages.
+
+    levelsPingOnLevelUp: Whether or not users should be @ mentioned on leveling up.
+
     musicVoteSkip: Set if you want users to vote on skipping songs (Default: false)
 
     musicVoteSkipRatio: Set the ratio required to voteskip, 0-1. (Default: 0.5)

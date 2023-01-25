@@ -29,7 +29,7 @@ except FileExistsError:
 try:
     with open("./cfg/levels.json", "x") as f:
         lvl = [100]
-        for i in range(100):
+        for i in range(settings["levelsMaxLevel"]):
             lvl.append(int(lvl[len(lvl) - 1] * 1.2 + 50))
         json.dump(lvl, f)
 
@@ -51,7 +51,7 @@ async def getLevel(experience):
     currentLevel = 0
 
     for level in levels:
-        print (f"{experience}, {currentLevel}")
+        # print (f"{experience}, {currentLevel}")
         if experience >= level:
             currentLevel += 1
 
@@ -74,7 +74,7 @@ class Levels(commands.Cog):
             userid = str(message.author.id)
             if userid not in experience.keys():
 
-                experience[userid] = {"experience": 10, "timestamp": time.time()}
+                experience[userid] = {"experience": 10, "timestamp": time.time(), "level": 0}
                 print(f"Added {message.author.name} to experience")
 
                 await writeExperience()
@@ -82,9 +82,18 @@ class Levels(commands.Cog):
             else:
 
                 # make sure user isn't getting exp too fast
-                if time.time() - experience[userid]["timestamp"] >= 15:
+                if time.time() - experience[userid]["timestamp"] >= int(settings["levelsExpCooldown"]):
                     experience[userid]["experience"] += random.randrange(10, 20)
                     experience[userid]["timestamp"] = time.time()
+
+                    # check if user's level has gone up
+                    if await getLevel(experience[userid]['experience']) > experience[userid]["level"]:
+                        experience[userid]["level"] = await getLevel(experience[userid]["experience"])
+
+                        if settings["levelsPingOnLevelUp"]:
+                            await message.channel.send(f"{message.author.mention} is now level {experience[userid]['level']}!")
+                        else:
+                            await message.channel.send(f"{message.author.user} is now level {experience[userid]['level']}")
 
                     await writeExperience()
                     print(f"Added xp to {message.author.name}")

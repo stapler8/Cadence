@@ -27,6 +27,16 @@ finally:
         settings = json.load(f)
     print("Settings loaded successfully")
 
-if len(DEFAULT_SETTINGS) > len(settings):
-    print("WARN: Settings file OUT OF DATE")
-    print("Please delete cfg.json and re-run to update")
+# If file length mismatch, add missing settings to cfg.json
+if len(DEFAULT_SETTINGS) != len(settings):
+
+    print("Setting mismatch detected, adding new entries")
+
+    # add missing entries to settings
+    settings = DEFAULT_SETTINGS | settings
+
+    # write to file
+    with open("cfg/cfg.json", "w") as f:
+        json.dump(settings, f)
+
+    print("Wrote new settings to file")
