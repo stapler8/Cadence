@@ -9,9 +9,6 @@ import time
 # import our global settings file
 from settings import settings
 
-# add a custom setting for our file
-settings["testMessage"] = "Hello!"
-
 experience = {}
 levels = []
 
@@ -28,15 +25,14 @@ except FileExistsError:
 
 try:
     with open("./cfg/levels.json", "x") as f:
-        lvl = [100]
+        lvl = [250]
         for i in range(settings["levelsMaxLevel"]):
-            lvl.append(int(lvl[len(lvl) - 1] * 1.2 + 50))
+            lvl.append(int(lvl[len(lvl) - 1] * 1.3 + 50))
         json.dump(lvl, f)
 
 except FileExistsError:
     with open ("./cfg/levels.json") as f:
         levels = json.load(f)
-
 
 
 async def writeExperience():
