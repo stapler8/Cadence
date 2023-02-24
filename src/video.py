@@ -1,11 +1,13 @@
-import youtube_dl as ytdl
+# import youtube_dl as ytdl
+import yt_dlp as ytdl
 import discord
 
 YTDL_OPTS = {
     "default_search": "ytsearch",
     "format": "bestaudio/best",
     "quiet": True,
-    "extract_flat": "in_playlist"
+    "extract_flat": "in_playlist",
+    "compat-options": "filename"
 }
 
 
@@ -39,7 +41,8 @@ class Video_Full:
         with ytdl.YoutubeDL(YTDL_OPTS) as ydl:
             video = self._get_info(url_or_search)
             video_format = video["formats"][0]
-            self.stream_url = video_format["url"]
+            # self.stream_url = video_format["url"]
+            self.stream_url = video["url"]
             self.video_url = video["webpage_url"]
             self.title = video["title"]
             self.uploader = video["uploader"] if "uploader" in video else ""

@@ -58,7 +58,6 @@ async def on_ready():
     #     c.commit()
     #     c.close()
 
-
     print("Bot is ready!")
 
 print("Loading bot")
