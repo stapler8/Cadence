@@ -40,3 +40,5 @@ if len(DEFAULT_SETTINGS) != len(settings):
         json.dump(settings, f)
 
     print("Wrote new settings to file")
+
+settings["version"] = "0.1"

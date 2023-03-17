@@ -5,7 +5,8 @@ from discord.ext import commands
 import random
 
 # import our global settings file
-from settings import settings
+import settings
+
 
 class Template(commands.Cog):
 

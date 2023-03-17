@@ -8,10 +8,13 @@
     "levelsExpCooldown": 60,
     "levelsPingOnLevelUp": true,
     "levelsMinLevelToMention": 5,
+    "maxDice": 32,
+    "maxDieSize": 100,
     "musicVoteSkip": false,
     "musicVoteSkipRatio": 0.5,
     "musicSkipRequiresAdmin": false,
     "musicRequiresRole": false,
     "musicRole": 0,
-    "quotesAddQuoteRequiresAdmin": false
+    "quotesAddQuoteRequiresAdmin": false,
+    "rollsPerLine": 4
 }

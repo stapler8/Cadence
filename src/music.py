@@ -12,7 +12,7 @@ from .video import Video, Playlist, Video_Full
 import ffmpeg
 import random
 
-from settings import settings
+import settings
 
 YTDL_OPTS = {
     "default_search": "ytsearch",
@@ -111,7 +111,7 @@ class Music(commands.Cog):
         state = self.get_state(interaction.guild)
         client = interaction.guild.voice_client
 
-        if not settings["musicVoteSkip"] and not settings["musicSkipRequiresAdmin"]:
+        if not settings.settings["musicVoteSkip"] and not settings.settings["musicSkipRequiresAdmin"]:
             client.stop()
             await interaction.response.send_message("Skipping song")
 
@@ -131,7 +131,7 @@ class Music(commands.Cog):
 
                 # announce vote
                 users_in_channel = len([member for member in channel.members if not member.bot])    # no robots allowed
-                required_votes = math.ceil(settings["voteSkipRatio"] * users_in_channel)
+                required_votes = math.ceil(settings.settings["voteSkipRatio"] * users_in_channel)
                 await interaction.response.send_message(
                     f"{interaction.user.mention} voted to skip ({len(state.skip_votes)}/{required_votes} votes")
 
@@ -140,7 +140,7 @@ class Music(commands.Cog):
         state = self.get_state(channel.guild)
         state.skip_votes.add(member)
         users_in_channel = len([member for member in channel.members if not member.bot])    # no bots here either
-        if (float(len(state.skip_votes)) / users_in_channel) >= settings["musicVoteSkipRatio"]:
+        if (float(len(state.skip_votes)) / users_in_channel) >= settings.settings["musicVoteSkipRatio"]:
             logging.info(f"Skipping track")
             channel.guild.voice_client.stop()
 
@@ -377,7 +377,7 @@ class Music(commands.Cog):
                             0, state.now_playing
                         )
                         client.stop()
-                elif reaction.emoji == "⏭" and settings["musicVoteSkip"] and user_in_channel and message.guild.voice_client and message.guild.voice_client.channel:
+                elif reaction.emoji == "⏭" and settings.settings["musicVoteSkip"] and user_in_channel and message.guild.voice_client and message.guild.voice_client.channel:
                     # ensure skip was pressed, vote skip enabled, user in channel, and bot in channel
                     voice_channel = message.guild.voice_client.channel
                     self._vote_skip(voice_channel, user)
@@ -386,7 +386,7 @@ class Music(commands.Cog):
                         member for member in voice_channel.members
                         if not member.bot
                     ]) # no robots
-                    required_votes = math.ceil(settings["musicVoteSkipRatio"] * users_in_channel)
+                    required_votes = math.ceil(settings.settings["musicVoteSkipRatio"] * users_in_channel)
                     await channel.send(f"{user.mention} voted to skip ({len(state.skip_votes)}/{required_votes} votes)")
 
     async def _add_reaction_controls(self, message):
@@ -409,4 +409,4 @@ class GuildState:
 
 async def setup(bot):
     # await bot.add_cog(Music(bot, config))
-    await bot.add_cog(Music(bot, settings))
+    await bot.add_cog(Music(bot, settings.settings))

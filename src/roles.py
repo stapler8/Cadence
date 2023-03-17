@@ -5,7 +5,7 @@ from discord.ui import Select, View, RoleSelect
 
 import random
 
-from settings import settings
+import settings
 
 class Roles(commands.Cog):
 
@@ -19,7 +19,7 @@ class Roles(commands.Cog):
 
         colours = []
         for role in interaction.guild.roles:
-            if role.name.startswith(settings["colourPrefix"]):
+            if role.name.startswith(settings.settings["colourPrefix"]):
                 colours.append(discord.SelectOption(label=role.name))
         select = discord.ui.Select(placeholder="Select your colour", options=colours)
 
@@ -32,7 +32,7 @@ class Roles(commands.Cog):
                     break
 
             for role in interaction.user.roles:
-                if role.name.startswith(settings["colourPrefix"]):
+                if role.name.startswith(settings.settings["colourPrefix"]):
                     await interaction.user.remove_roles(role)
 
             await interaction.user.add_roles(newrole)

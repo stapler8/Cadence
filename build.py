@@ -9,7 +9,7 @@ from settings import settings
 from dotenv import load_dotenv
 load_dotenv()
 
-bot = commands.Bot(command_prefix="", intents=discord.Intents.all())
+bot = commands.Bot(command_prefix="", intents=discord.Intents.all(), status=settings["botStatus"])
 
 
 @bot.event

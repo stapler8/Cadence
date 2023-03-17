@@ -7,7 +7,7 @@ import json
 import time
 
 # import our global settings file
-from settings import settings
+import settings
 
 experience = {}
 levels = []
@@ -26,7 +26,7 @@ except FileExistsError:
 try:
     with open("./cfg/levels.json", "x") as f:
         lvl = [250]
-        for i in range(settings["levelsMaxLevel"]):
+        for i in range(settings.settings["levelsMaxLevel"]):
             lvl.append(int(lvl[len(lvl) - 1] * 1.3 + 50))
         json.dump(lvl, f)
 
@@ -78,7 +78,7 @@ class Levels(commands.Cog):
             else:
 
                 # make sure user isn't getting exp too fast
-                if time.time() - experience[userid]["timestamp"] >= int(settings["levelsExpCooldown"]):
+                if time.time() - experience[userid]["timestamp"] >= int(settings.settings["levelsExpCooldown"]):
                     experience[userid]["experience"] += random.randrange(10, 20)
                     experience[userid]["timestamp"] = time.time()
                     experience[userid]['name'] = message.author.name
@@ -91,8 +91,8 @@ class Levels(commands.Cog):
                         experience[userid]["level"] = newlevel
 
                         # message user on level up
-                        if settings["levelsMinLevelToMention"] <= newlevel:
-                            if settings["levelsPingOnLevelUp"]:
+                        if settings.settings["levelsMinLevelToMention"] <= newlevel:
+                            if settings.settings["levelsPingOnLevelUp"]:
                                 await message.channel.send(f"{message.author.mention} is now level {experience[userid]['level']}!")
                             else:
                                 await message.channel.send(f"{message.author.user} is now level {experience[userid]['level']}")

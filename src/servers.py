@@ -6,7 +6,7 @@ from discord.ui import Select, View, RoleSelect
 import json
 
 # import our global settings file
-from settings import settings
+import settings
 
 servers = {}
 
@@ -42,7 +42,7 @@ class Servers(commands.Cog):
 
     # Create our test command with an optional message argument
     @app_commands.command(name="addserver")
-    @app_commands.checks.has_role(settings["adminRoleID"])
+    @app_commands.checks.has_role(settings.settings["adminRoleID"])
     async def addserver(self, interaction: discord.Interaction, name: str, address: str, description: str = ""):
         """Add a server to the list"""
 
@@ -68,8 +68,8 @@ class Servers(commands.Cog):
         """View information about a server"""
 
         # Optionally disallow unauthorised access to the server list
-        if settings["clubhouseRoleID"] != 0:
-            if not await checkID(interaction, settings["clubhouseRoleID"]):
+        if settings.settings["clubhouseRoleID"] != 0:
+            if not await checkID(interaction, settings.settings["clubhouseRoleID"]):
                 await interaction.response.send_message("Error: You do not have the required role to use this command",
                                                         ephemeral=True)
                 return
@@ -111,7 +111,7 @@ class Servers(commands.Cog):
         await interaction.response.send_message("Select a server: ", view=view, ephemeral=True)
 
     @app_commands.command(name="removeserver")
-    @app_commands.checks.has_role(settings["adminRoleID"])
+    @app_commands.checks.has_role(settings.settings["adminRoleID"])
     async def removeserver(self, interaction: discord.Interaction):
         """Remove a server from the list"""
 
@@ -143,7 +143,7 @@ class Servers(commands.Cog):
         await interaction.response.send_message("Select a server to remove: ", view=view, ephemeral=True)
 
     @app_commands.command(name="modifyserver")
-    @app_commands.checks.has_role(settings["adminRoleID"])
+    @app_commands.checks.has_role(settings.settings["adminRoleID"])
     async def modifyserver(self, interaction: discord.Interaction, newname: str = "", newaddress: str = "", newdescription: str = ""):
         """Modify a server in the list"""
 
