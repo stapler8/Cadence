@@ -41,4 +41,4 @@ if len(DEFAULT_SETTINGS) != len(settings):
 
     print("Wrote new settings to file")
 
-settings["version"] = "0.1"
+settings["version"] = "Full 0.1"
