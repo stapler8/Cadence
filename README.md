@@ -15,6 +15,7 @@ Run the bot inside your venv:
     python3 build.py
 
 Once in discord:    
+
     /setadminrole <id>, if you set the ID incorrectly you must edit cfg/cfg.json manually.
     After setting this, the bot must be restarted.
 
@@ -38,6 +39,10 @@ Cadence bot settings:
 
     levelsMinLevelToMention: The minimum level a user must have before the bot sends a levelup message.
 
+    maxDice: The maximum amount of dice that can be rolled at once
+
+    MaxDieSize: The maximum number of sides of the dice being rolled
+
     musicVoteSkip: Set if you want users to vote on skipping songs (Default: false)
 
     musicVoteSkipRatio: Set the ratio required to voteskip, 0-1. (Default: 0.5)
@@ -48,7 +53,9 @@ Cadence bot settings:
 
     musicRole: Used by musicRequiresRole
 
-true/false settings ARE case-sensitive
+    quotesAddQuoteRequiresAdmin: Unused
+
+    rollsPerLine: Sets the amount of dice that are displayed before a newline.
 
 Credits:
 
