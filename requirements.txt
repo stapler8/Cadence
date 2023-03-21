@@ -1,4 +1,4 @@
-discord.py==2.1.0
+discord.py==2.2.2
 ffmpeg==1.4
 python-dotenv==0.20.0
 yt-dlp==2023.02.17

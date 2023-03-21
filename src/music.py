@@ -61,6 +61,7 @@ class Music(commands.Cog):
         self.states = {}
         self.bot.add_listener(self.on_reaction_add, "on_reaction_add")
 
+
     def get_state(self, guild):
         if guild.id in self.states:
             return self.states[guild.id]
@@ -311,7 +312,7 @@ class Music(commands.Cog):
 
         client = interaction.guild.voice_client
         state = self.get_state(interaction.guild)
-        state.volume
+
         if client and client.channel:
 
             try:
@@ -321,6 +322,8 @@ class Music(commands.Cog):
                 await interaction.edit_original_response(content="An error occurred when downloading the video")
                 return
 
+
+
             state.playlist.extend(pl.playlist)
             if len(pl.playlist) > 1:
                 await interaction.edit_original_response(content="Added to queue", embed=pl.get_embed())
@@ -329,6 +332,8 @@ class Music(commands.Cog):
 
             message = await interaction.original_response()
             await self._add_reaction_controls(message)
+
+
 
         else:
             if interaction.user.voice is not None and interaction.user.voice.channel is not None:
@@ -361,11 +366,15 @@ class Music(commands.Cog):
         message = reaction.message
         if user != self.bot.user and message.author == self.bot.user:
             await message.remove_reaction(reaction, user)
+            if reaction.emoji not in ["⏯", "⏭", "⏮"]:
+                return
+
             if message.guild and message.guild.voice_client:
                 user_in_channel = user.voice and user.voice.channel and user.voice.channel == message.guild.voice_client.channel
                 permissions = message.channel.permissions_for(user)
                 guild = message.guild
                 state = self.get_state(guild)
+
                 if permissions.administrator or (user_in_channel and state.is_requester(user)):
                     client = message.guild.voice_client
                     if reaction.emoji == "⏯":   # play/pause
@@ -377,6 +386,7 @@ class Music(commands.Cog):
                             0, state.now_playing
                         )
                         client.stop()
+
                 elif reaction.emoji == "⏭" and settings.settings["musicVoteSkip"] and user_in_channel and message.guild.voice_client and message.guild.voice_client.channel:
                     # ensure skip was pressed, vote skip enabled, user in channel, and bot in channel
                     voice_channel = message.guild.voice_client.channel
