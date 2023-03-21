@@ -2,6 +2,7 @@ import json
 
 DEFAULT_SETTINGS = {}
 server = {}
+settings = {}
 
 # load our default settings and server values
 if not DEFAULT_SETTINGS:
@@ -26,6 +27,7 @@ finally:
     with open("cfg/cfg.json") as f:
         settings = json.load(f)
     print("Settings loaded successfully")
+
 
 # If file length mismatch, add missing settings to cfg.json
 if len(DEFAULT_SETTINGS) != len(settings):
