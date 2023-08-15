@@ -137,7 +137,6 @@ class Levels(commands.Cog):
         embed = discord.Embed(title=f"{username}:", description=f"Level: {level}\nExperience: {exp}\nMessages: {msgCount}")
         await interaction.response.send_message(embed=embed)
 
-
     @app_commands.command(name="leaderboard")
     async def leaderboard(self, interaction: discord.Interaction):
         """Get the server's exp leaderboard"""

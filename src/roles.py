@@ -7,6 +7,7 @@ import random
 
 import settings
 
+
 class Roles(commands.Cog):
 
     def __init__(self, bot):
@@ -44,11 +45,6 @@ class Roles(commands.Cog):
         view.add_item(select)
 
         await interaction.response.send_message("Select your colour: ", view=view, ephemeral=True)
-
-        # interaction.user.add_roles(select.values[0])
-
-
-
 
 
 # add our cog to the bot, so it's all run on startup.

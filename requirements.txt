@@ -1,7 +1,7 @@
 discord.py==2.2.2
 ffmpeg==1.4
 python-dotenv==0.20.0
-yt-dlp==2023.02.17
+yt-dlp==2023.07.06
 requests==2.27.1
 git+https://github.com/ytdl-org/youtube-dl.git@master#egg=youtube_dl
 PyNaCl==1.5.0
