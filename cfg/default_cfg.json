@@ -16,5 +16,10 @@
     "musicRequiresRole": false,
     "musicRole": 0,
     "quotesAddQuoteRequiresAdmin": false,
-    "rollsPerLine": 4
+    "rollsPerLine": 4,
+    "tosChannel": 0,
+    "tosMessage": 0,
+    "tosNSFWRole": 0,
+    "tosSFWRole": 0,
+    "tosWelcomeRole": 0
 }

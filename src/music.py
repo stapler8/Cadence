@@ -8,6 +8,8 @@ import youtube_dl
 import yt_dlp
 import math
 from urllib import request
+
+from .exception.NotInVoiceChannelException import NotInVoiceChannelException
 from .video import Video, Playlist, Video_Full
 import ffmpeg
 import random
@@ -50,7 +52,7 @@ async def is_audio_requester(ctx):
     if permissions.administrator or state.is_requester(ctx.author):
         return True
     else:
-        pass    # error 3
+        return None
 
 
 class Music(commands.Cog):
@@ -74,16 +76,18 @@ class Music(commands.Cog):
     # @commands.has_permissions(administrator=True)
     async def stop(self, interaction: discord.Interaction):
         """Disconnect the music player"""
+        await interaction.response.defer(thinking=True)
 
         client = interaction.guild.voice_client
         state = self.get_state(interaction.guild)
+
         if client and client.channel:
-            await client.disconnect()
             state.playlist = []
             state.now_playing = None
-            await interaction.response.send_message("Stopped music")
+            await client.disconnect(force=False)
+            await interaction.edit_original_response(content="", embed=discord.Embed(description="Stopped music"))
         else:
-            await interaction.response.send_message("Must be in voice channel to play music")
+            await interaction.edit_original_response(content="", embed=discord.Embed(description="Must be in voice channel to play music"))
 
     @app_commands.command()
     @commands.guild_only()
@@ -95,6 +99,11 @@ class Music(commands.Cog):
 
         client = interaction.guild.voice_client
         self._pause_audio(client)
+
+        if client.is_paused():
+            await interaction.response.send_message("", embed=discord.Embed(description="Paused"))
+        else:
+            await interaction.response.send_message("", embed=discord.Embed(description="Unpaused"))
 
     def _pause_audio(self, client):     # pause/resume based on current player state
         if client.is_paused():
@@ -114,17 +123,17 @@ class Music(commands.Cog):
 
         if not settings.settings["musicVoteSkip"] and not settings.settings["musicSkipRequiresAdmin"]:
             client.stop()
-            await interaction.response.send_message("Skipping song")
+            await interaction.response.send_message("", embed=discord.Embed(description="Skipping song"))
 
         elif interaction.channel.permissions_for(interaction.user).administrator:
             client.stop()
-            await interaction.response.send_message("Skipping song")
+            await interaction.response.send_message("", embed=discord.Embed(description="Skipping song"))
 
         else:
             if interaction.channel.permissions_for(interaction.user).administrator\
                     or state.is_requester(interaction.user):
                 client.stop()
-                await interaction.response.send_message("Skipping song")
+                await interaction.response.send_message("", embed=discord.Embed(description="Skipping song"))
 
             else:
                 channel = client.channel
@@ -133,8 +142,8 @@ class Music(commands.Cog):
                 # announce vote
                 users_in_channel = len([member for member in channel.members if not member.bot])    # no robots allowed
                 required_votes = math.ceil(settings.settings["voteSkipRatio"] * users_in_channel)
-                await interaction.response.send_message(
-                    f"{interaction.user.mention} voted to skip ({len(state.skip_votes)}/{required_votes} votes")
+                await interaction.response.send_message("",
+                    embed=discord.Embed(description=f"{interaction.user.mention} voted to skip ({len(state.skip_votes)}/{required_votes} votes"))
 
     def _vote_skip(self, channel, member):
         logging.info(f"{member.name} votes to skip")
@@ -154,11 +163,79 @@ class Music(commands.Cog):
         def after_playing(err):
             if len(state.playlist) > 0:
                 next_song_short = state.playlist.pop(0)
-                next_song = Video_Full(next_song_short.video_url, next_song_short.requested_by)
+                try:
+                    next_song = Video_Full(next_song_short.video_url, next_song_short.requested_by)
+                except yt_dlp.utils.DownloadError:
+                    after_playing(None)
+                    return
                 self._play_song(client, state, next_song)
-            else:
+            elif state.now_playing is not None:
                 asyncio.run_coroutine_threadsafe(client.disconnect(), self.bot.loop)
         client.play(source, after=after_playing)
+
+    async def _queue_song(self, interaction, url) -> discord.embeds.Embed:
+        client = interaction.guild.voice_client
+        state = self.get_state(interaction.guild)
+
+        # client connected to voice
+        if client and client.channel:
+            try:
+                pl = Playlist(url, interaction.user)
+            except (yt_dlp.DownloadError, yt_dlp.utils.DownloadError) as e:
+                raise e
+
+            state.playlist.extend(pl.playlist)
+            if len(pl.playlist) > 1:
+                return pl.get_embed()
+            else:
+                return pl.playlist[0].get_embed()
+
+        # client not connected to voice
+        else:
+            if interaction.user.voice is not None and interaction.user.voice.channel is not None:
+                channel = interaction.user.voice.channel
+                try:
+                    pl = Playlist(url, interaction.user)
+                except (yt_dlp.DownloadError, yt_dlp.utils.DownloadError) as e:
+                    raise e
+
+                client = await channel.connect()
+                try:
+                    video = Video_Full(pl.playlist[0].video_url, interaction.user)
+                except yt_dlp.utils.DownloadError as e:
+                    await client.disconnect()
+                    raise e
+
+                state.playlist.extend(pl.playlist[1:])
+                self._play_song(client, state, video)
+
+                if len(pl.playlist) > 1:
+                    return pl.get_embed()
+                else:
+                    return pl.playlist[0].get_embed()
+
+            else:
+                raise NotInVoiceChannelException()
+
+    def _get_error_response(self, error: Exception) -> discord.embeds.Embed:
+        msg = error.msg
+
+        if type(error) is NotInVoiceChannelException:
+            return discord.Embed(description=msg, color=discord.Color.red())
+
+        if not msg:
+            return discord.Embed(description="An unknown error occurred when downloading the video. " +
+                                 "No further information is available.",
+                                 color=discord.Color.red())
+
+        if "please sign in" in msg:
+            return discord.Embed(description="An error occurred when downloading the video. " +
+                                             "This may be caused by video age restrictions.",
+                                 color=discord.Color.red())
+
+        return discord.Embed(description="An unknown error occurred when downloading the video.\n" + msg,
+                             color=discord.Color.red())
+
 
     @app_commands.command()
     @commands.guild_only()
@@ -166,7 +243,6 @@ class Music(commands.Cog):
     async def nowplaying(self, interaction: discord.Interaction):
         """Check the currently playing song"""
 
-        # ctx = await self.bot.get_context(interaction)
         state = self.get_state(interaction.guild)
 
         if await audio_playing(interaction) and await in_voice_channel(interaction):
@@ -175,7 +251,7 @@ class Music(commands.Cog):
             await self._add_reaction_controls(message)
 
         else:
-            await interaction.response.send_message("Bot is not playing")
+            await interaction.response.send_message("", embed=discord.Embed(description="Bot is not playing"))
 
     @app_commands.command()
     @commands.guild_only()
@@ -214,7 +290,7 @@ class Music(commands.Cog):
 
         state = self.get_state(interaction.guild)
         state.playlist = []
-        await interaction.response.send_message("Queue Cleared")
+        await interaction.response.send_message("", embed=discord.Embed(description="Queue Cleared"))
 
     @app_commands.command()
     @commands.guild_only()
@@ -231,10 +307,12 @@ class Music(commands.Cog):
 
             numbers_per_msg = 15
             for i in range(0, len(state.playlist), numbers_per_msg):
-                await interaction.response.send_message(self._queue_text(i,
-                                                        len(state.playlist), state.playlist[i:i+numbers_per_msg]))
+                await interaction.response.send_message("", embed=discord.Embed(description=self._queue_text(i,
+                                                        len(state.playlist), state.playlist[i:i+numbers_per_msg])))
         else:
-            await interaction.response.send_message("Invalid Index", ephemeral=True)
+            await interaction.response.send_message("",
+                                                    embed=discord.Embed(description="Invalid Index"),
+                                                    ephemeral=True)
 
     @app_commands.command()
     @commands.guild_only()
@@ -246,11 +324,18 @@ class Music(commands.Cog):
         if 1 <= song_index <= len(state.playlist):
             state.playlist.pop(song_index - 1)
             numbers_per_msg = 15
-            for i in range(0, len(state.playlist), numbers_per_msg):
-                await interaction.response.send_message(self._queue_text(i, len(state.playlist),
-                                                                         state.playlist[i:i+numbers_per_msg]))
+
+            if len(state.playlist) == 0:
+                await interaction.response.send_message("", embed=discord.Embed(description="There is no music in the queue"))
+
+            else:
+                for i in range(0, len(state.playlist), numbers_per_msg):
+                    await interaction.response.send_message("", embed=discord.Embed(description=self._queue_text(i,
+                                                            len(state.playlist), state.playlist[i:i+numbers_per_msg])))
         else:
-            await interaction.response.send_message("Invalid Index", ephemeral=True)
+            await interaction.response.send_message("",
+                                                    embed=discord.Embed(description="Invalid Index"),
+                                                    ephemeral=True)
 
     @app_commands.command()
     @commands.guild_only()
@@ -260,7 +345,7 @@ class Music(commands.Cog):
 
         state = self.get_state(interaction.guild)
         random.shuffle(state.playlist)
-        await interaction.response.send_message("Playlist shuffled")
+        await interaction.response.send_message("", embed=discord.Embed(description="Playlist shuffled"))
 
     @app_commands.command()
     @commands.guild_only()
@@ -269,11 +354,25 @@ class Music(commands.Cog):
         """Skip current song and play requested one"""
 
         await interaction.response.defer(thinking=True)
+
         client = interaction.guild.voice_client
         state = self.get_state(interaction.guild)
 
-        state.playlist[:0] = Playlist(url, interaction.user).playlist
-        client.stop()
+        # bot not connected
+        if not client or not client.channel:
+            try:
+                response = await self._queue_song(interaction, url)
+                await interaction.edit_original_response(embed=response)
+            except (yt_dlp.DownloadError, yt_dlp.utils.DownloadError, NotInVoiceChannelException) as e:
+                error_response = self._get_error_response(msg=e.msg)
+                await interaction.edit_original_response(content="An error occurred.", embed=error_response)
+                return
+
+        # standard behaviour
+        else:
+            state.playlist[:0] = Playlist(url, interaction.user).playlist
+            client.stop()
+
         pl = Playlist(url, interaction.user)
 
         if len(pl.playlist) > 1:
@@ -291,8 +390,24 @@ class Music(commands.Cog):
         """Add a song to the top of the queue"""
 
         await interaction.response.defer(thinking=True)
+
+        client = interaction.guild.voice_client
         state = self.get_state(interaction.guild)
-        state.playlist[:0] = Playlist(url, interaction.user).playlist
+
+        # bot not connected
+        if not client or not client.channel:
+            try:
+                response = await self._queue_song(interaction, url)
+                await interaction.edit_original_response(embed=response)
+            except (yt_dlp.DownloadError, yt_dlp.utils.DownloadError, NotInVoiceChannelException) as e:
+                error_response = self._get_error_response(msg=e.msg)
+                await interaction.edit_original_response(content="An error occurred.", embed=error_response)
+                return
+
+        # standard behaviour
+        else:
+            state.playlist[:0] = Playlist(url, interaction.user).playlist
+
         pl = Playlist(url, interaction.user)
 
         if len(pl.playlist) > 1:
@@ -310,94 +425,65 @@ class Music(commands.Cog):
         # defer our interaction response
         await interaction.response.defer(thinking=True)
 
-        client = interaction.guild.voice_client
-        state = self.get_state(interaction.guild)
+        # early exit if video can't be downloaded
+        try:
+            response = await self._queue_song(interaction, url)
+            await interaction.edit_original_response(embed=response)
+        except (yt_dlp.DownloadError, yt_dlp.utils.DownloadError, NotInVoiceChannelException) as e:
+            error_response = self._get_error_response(error = e)
+            await interaction.edit_original_response(content="An error occurred.", embed=error_response)
+            return
 
-        if client and client.channel:
-
-            try:
-                pl = Playlist(url, interaction.user)
-            except youtube_dl.DownloadError as e:
-                logging.warning(f"Error downloading video: {e}")
-                await interaction.edit_original_response(content="An error occurred when downloading the video")
-                return
-
-
-
-            state.playlist.extend(pl.playlist)
-            if len(pl.playlist) > 1:
-                await interaction.edit_original_response(content="Added to queue", embed=pl.get_embed())
-            else:
-                await interaction.edit_original_response(content="Added to queue", embed=pl.playlist[0].get_embed())
-
-            message = await interaction.original_response()
-            await self._add_reaction_controls(message)
-
-
-
-        else:
-            if interaction.user.voice is not None and interaction.user.voice.channel is not None:
-                channel = interaction.user.voice.channel
-                try:
-                    pl = Playlist(url, interaction.user)
-                except youtube_dl.DownloadError as e:
-                    await interaction.edit_original_response(content="An error occurred when downloading the video")
-                    return
-
-                client = await channel.connect()
-                video = Video_Full(pl.playlist[0].video_url, interaction.user)
-                state.playlist.extend(pl.playlist[1:])
-                self._play_song(client, state, video)
-
-                if len(pl.playlist) > 1:
-                    await interaction.edit_original_response(content="", embed=pl.get_embed())
-                else:
-                    # message = await interaction.edit_original_response("", embed=video.get_embed())
-                    await interaction.edit_original_response(content="", embed=pl.playlist[0].get_embed())
-
-                message = await interaction.original_response()
-                await self._add_reaction_controls(message)
-                logging.info(f"Now playing '{video.title}'")
-
-            else:
-                await interaction.edit_original_response(content="User must be in voice channel to play music")
+        message = await interaction.original_response()
+        await self._add_reaction_controls(message)
 
     async def on_reaction_add(self, reaction, user):
         message = reaction.message
-        if user != self.bot.user and message.author == self.bot.user:
-            await message.remove_reaction(reaction, user)
-            if reaction.emoji not in ["⏯", "⏭", "⏮"]:
-                return
 
-            if message.guild and message.guild.voice_client:
-                user_in_channel = user.voice and user.voice.channel and user.voice.channel == message.guild.voice_client.channel
-                permissions = message.channel.permissions_for(user)
-                guild = message.guild
-                state = self.get_state(guild)
+        # ignore reactions by the bot or to non-bot messages
+        if user == self.bot.user or message.author != self.bot.user:
+            return
 
-                if permissions.administrator or (user_in_channel and state.is_requester(user)):
-                    client = message.guild.voice_client
-                    if reaction.emoji == "⏯":   # play/pause
-                        self._pause_audio(client)
-                    elif reaction.emoji == "⏭":     # skip track
-                        client.stop()
-                    elif reaction.emoji == "⏮":     # restart track
-                        state.playlist.insert(
-                            0, state.now_playing
-                        )
-                        client.stop()
+        # remove reactions and ignore invalid ones
+        await message.remove_reaction(reaction, user)
+        if reaction.emoji not in ["⏯", "⏭", "⏮"]:
+            return
 
-                elif reaction.emoji == "⏭" and settings.settings["musicVoteSkip"] and user_in_channel and message.guild.voice_client and message.guild.voice_client.channel:
-                    # ensure skip was pressed, vote skip enabled, user in channel, and bot in channel
-                    voice_channel = message.guild.voice_client.channel
-                    self._vote_skip(voice_channel, user)
-                    channel = message.channel
-                    users_in_channel = len([
-                        member for member in voice_channel.members
-                        if not member.bot
-                    ]) # no robots
-                    required_votes = math.ceil(settings.settings["musicVoteSkipRatio"] * users_in_channel)
-                    await channel.send(f"{user.mention} voted to skip ({len(state.skip_votes)}/{required_votes} votes)")
+        # do nothing if not connected
+        if not message.guild or not message.guild.voice_client:
+            return
+
+        if message.guild and message.guild.voice_client:
+            user_in_channel = user.voice and user.voice.channel and user.voice.channel == message.guild.voice_client.channel
+            permissions = message.channel.permissions_for(user)
+            guild = message.guild
+            state = self.get_state(guild)
+
+            if permissions.administrator or (user_in_channel and state.is_requester(user)):
+                client = message.guild.voice_client
+                if reaction.emoji == "⏯":   # play/pause
+                    self._pause_audio(client)
+                elif reaction.emoji == "⏭":     # skip track
+                    client.stop()
+                elif reaction.emoji == "⏮":     # restart track
+                    state.playlist.insert(
+                        0, state.now_playing
+                    )
+                    client.stop()
+
+            elif reaction.emoji == "⏭" and settings.settings["musicVoteSkip"] and user_in_channel and message.guild.voice_client and message.guild.voice_client.channel:
+                # ensure skip was pressed, vote skip enabled, user in channel, and bot in channel
+                voice_channel = message.guild.voice_client.channel
+                self._vote_skip(voice_channel, user)
+
+                channel = message.channel
+                users_in_channel = len([
+                    member for member in voice_channel.members
+                    if not member.bot
+                ]) # no robots
+
+                required_votes = math.ceil(settings.settings["musicVoteSkipRatio"] * users_in_channel)
+                await channel.send(f"{user.mention} voted to skip ({len(state.skip_votes)}/{required_votes} votes)")
 
     async def _add_reaction_controls(self, message):
         # adds a reaction control to the bot
@@ -418,5 +504,4 @@ class GuildState:
 
 
 async def setup(bot):
-    # await bot.add_cog(Music(bot, config))
     await bot.add_cog(Music(bot, settings.settings))
