@@ -7,7 +7,8 @@ YTDL_OPTS = {
     "format": "bestaudio/best",
     "quiet": True,
     "extract_flat": "in_playlist",
-    "compat-options": "filename"
+    "compat-options": "filename",
+    "js_runtimes": {"deno": {}, "node": {}}
 }
 
 
